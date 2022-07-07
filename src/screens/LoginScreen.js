@@ -11,11 +11,13 @@ import { theme } from '../core/theme'
 import { emailValidator } from '../helpers/emailValidator'
 import { passwordValidator } from '../helpers/passwordValidator'
 import { AuthContext } from '../hooks/authContext'
+import axios from 'axios'
 
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState({ value: '', error: '' })
   const [password, setPassword] = useState({ value: '', error: '' })
+  const [postingError, setPostingError] = useState('')
 
   const setIsLoggedIn =  useContext(AuthContext).setIsLoggedIn;
 
@@ -27,13 +29,21 @@ export default function LoginScreen({ navigation }) {
       setPassword({ ...password, error: passwordError })
       return
     }
-     
-    setIsLoggedIn(true);
     
+
+    await axios.post('http://', {
+      email: email.value,
+      password: password.value
+    }).then(res => {
+      setIsLoggedIn(true)
+    }).catch(err => {
+      setPostingError("Something bad happened")
+    })
     // navigation.reset({
     //   index: 0,
     //   routes: [{ name: 'Dashboard' }],
     // })
+    
   }
 
   return (
@@ -69,6 +79,7 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.forgot}>Forgot your password?</Text>
         </TouchableOpacity>
       </View>
+      {postingError && <Text style={styles.error}>{postingError}</Text>}
       <Button mode="contained" onPress={onLoginPressed}>
         Login
       </Button>
@@ -100,4 +111,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.primary,
   },
+  error: {
+    color: theme.colors.error,
+    alignSelf: 'center',
+  }
 })

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import { Text } from 'react-native-paper'
 import Background from '../components/Background'
@@ -11,12 +11,17 @@ import { theme } from '../core/theme'
 import { emailValidator } from '../helpers/emailValidator'
 import { passwordValidator } from '../helpers/passwordValidator'
 import { nameValidator } from '../helpers/nameValidator'
-import { saveItem } from '../helpers/storage'
+import axios from 'axios'
+import { AuthContext } from '../hooks/authContext'
+
 
 export default function RegisterScreen({ navigation }) {
   const [name, setName] = useState({ value: '', error: '' })
   const [email, setEmail] = useState({ value: '', error: '' })
   const [password, setPassword] = useState({ value: '', error: '' })
+  const [postingError, setPostingError] = useState('')
+
+  const setIsLoggedIn =  useContext(AuthContext).setIsLoggedIn;
 
   const onSignUpPressed = async () => {
     const nameError = nameValidator(name.value)
@@ -28,12 +33,21 @@ export default function RegisterScreen({ navigation }) {
       setPassword({ ...password, error: passwordError })
       return
     }
-    await saveItem('token', '123456789')
 
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Dashboard' }],
+    await axios.post('http://', {
+      email: email.value,
+      password: password.value,
+      name: name.value
+    }).then(res => {
+      setIsLoggedIn(true)
+    }).catch(err => {
+      setPostingError("Something bad happened")
     })
+
+    // navigation.reset({
+    //   index: 0,
+    //   routes: [{ name: 'Dashboard' }],
+    // })
   }
 
   return (
@@ -70,10 +84,10 @@ export default function RegisterScreen({ navigation }) {
         errorText={password.error}
         secureTextEntry
       />
+      {postingError && <Text style={styles.error}>{postingError}</Text>}
       <Button
         mode="contained"
         onPress={onSignUpPressed}
-        style={{ marginTop: 24 }}
       >
         Sign Up
       </Button>
@@ -96,4 +110,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: theme.colors.primary,
   },
+  error: {
+    color: theme.colors.error,
+    alignSelf: 'center',
+    marginTop: 24
+  }
 })
